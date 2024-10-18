@@ -1,17 +1,15 @@
+import React from 'react';
 import './App.css';
-import Header from './components/Header'; // Import Header component
-import PredictionBoard from './components/PredictionBoard'; // Import PredictionCard component
+import Header from './components/Header';
+import PredictionBoard from './components/PredictionBoard';
 
 function App() {
   return (
-    <div className="app-container"> {/* Unique class for scoping */}
-      {/* Render Header component */}
+    <div className="app-container">
       <Header />
-
-      {/* Always render PredictionCard */}
-      <div className="prediction-container">
+      <main className="main-content">
         <PredictionBoard />
-      </div>
+      </main>
     </div>
   );
 }

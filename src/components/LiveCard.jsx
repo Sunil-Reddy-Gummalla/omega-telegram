@@ -1,77 +1,84 @@
 import React, { useState, useEffect } from 'react';
 import './Card.css';
+import { ethers } from 'ethers';
+import { getContract } from '../utils/contractUtils';
+import { getTezosPrice } from '../utils/api';
 
-const LiveCard = ({ price, isTimeOver, onResetTimer }) => {
-    const [lockedPrice, setLockedPrice] = useState("0.6900"); // Initialize locked price
-    const [priceChange, setPriceChange] = useState(0);
-    const [upMultiplier, setUpMultiplier] = useState(1);
-    const [downMultiplier, setDownMultiplier] = useState(1);
-    const [isCalculating, setIsCalculating] = useState(false);
-    const pricePool = 1000;
+const LiveCard = () => {
+    const [roundInfo, setRoundInfo] = useState(null);
+    const [timeLeft, setTimeLeft] = useState(0);
+    const [currentPrice, setCurrentPrice] = useState(null);
+
     useEffect(() => {
-        if (!isTimeOver) {
-            const calculatedPriceChange = (price - lockedPrice).toFixed(5); // Price change with 5 decimal places
-            setPriceChange(calculatedPriceChange);
+        const fetchData = async () => {
+            try {
+                const contract = getContract();
+                const currentEpoch = await contract.currentEpoch();
+                const round = await contract.rounds(currentEpoch);
+                setRoundInfo(round);
 
-            const calculatedUpMultiplier = (1 + Math.abs(calculatedPriceChange) / 100).toFixed(2);
-            setUpMultiplier(calculatedUpMultiplier);
+                const price = await getTezosPrice();
+                setCurrentPrice(price);
+            } catch (error) {
+                console.error("Error fetching data:", error);
+            }
+        };
 
-            const calculatedDownMultiplier = (1 - Math.abs(calculatedPriceChange) / 100).toFixed(2);
-            setDownMultiplier(calculatedDownMultiplier);
-        }
-    }, [price, lockedPrice, isTimeOver]);
+        fetchData();
+        const interval = setInterval(fetchData, 60000); // Refresh every 60 seconds
 
-    // Handle time over (processing for 10 seconds, then reset timer)
+        return () => clearInterval(interval);
+    }, []);
+
     useEffect(() => {
-        if (isTimeOver) {
-            setIsCalculating(true); // Show "Calculating..." message
-
-            // Simulate processing for 10 seconds
-            const timer = setTimeout(() => {
-                setIsCalculating(false); // Hide "Calculating..." message
-                if (onResetTimer) {
-                    onResetTimer(); // Call the parent component's function to reset the timer
-                }
-            }, 10000); // 10 seconds delay
-
-            return () => clearTimeout(timer); // Cleanup timer if component unmounts
+        if (roundInfo) {
+            const interval = setInterval(() => {
+                const now = Math.floor(Date.now() / 1000);
+                const end = Number(roundInfo.closeTimestamp);
+                const left = end - now;
+                setTimeLeft(left > 0 ? left : 0);
+            }, 1000);
+            return () => clearInterval(interval);
         }
-    }, [isTimeOver, price, onResetTimer]);
+    }, [roundInfo]);
+
+    if (!roundInfo) return <div>Loading...</div>;
+
+    const lockPrice = ethers.formatUnits(roundInfo.lockPrice, 8);
+    const totalAmount = ethers.formatEther(roundInfo.totalAmount);
 
     return (
         <div className="card live-card">
             <h2>Live Prediction</h2>
-            <p>Locked Price: ${lockedPrice}</p>
-            {isCalculating ? (
-                <div className="loading-container">
-                    <img src="https://i.gifer.com/Xuw0.gif" alt="Loading..." className="loading-icon" />
-                    <p className="centered-text">Calculating...</p> {/* Show this when processing */}
+            <p>Locked Price: ${lockPrice}</p>
+            <div className="info-row">
+                <div className="time-left">Time Left: {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}</div>
+            </div>
+            <div className="info-container">
+                <div className="info-box">
+                    <h4>Prize Pool</h4>
+                    <p>{totalAmount} XTZ</p>
                 </div>
-            ) : (
-                <>
-                    <div className="info-row">
-                        <div className={`price-box ${priceChange >= 0 ? 'positive' : 'negative'}`}>
-                            Current Price: ${price}
-                        </div>
-                        <div className={`price-change ${priceChange >= 0 ? 'positive' : 'negative'}`}>
-                            Price Change: {priceChange}
-                        </div>
-                    </div>
-                    <div className="info-container">
-                        <div className="info-box">
-                            <h4>Prize Pool</h4>
-                            <p>${pricePool}</p> {/* Placeholder value */}
-                        </div>
-                        <div className="info-box">
-                            <h4>Up</h4>
-                            <p>{upMultiplier}</p> {/* Placeholder value */}
-                        </div>
-                        <div className="info-box">
-                            <h4>Down</h4>
-                            <p>{downMultiplier}</p> {/* Placeholder value */}
-                        </div>
-                    </div>
-                </>
+                <div className="info-box">
+                    <h4>Up</h4>
+                    <p>{roundInfo.bullAmount > 0 ? 
+                        (Number(roundInfo.totalAmount) / Number(roundInfo.bullAmount)).toFixed(2) : 
+                        '0'}x</p>
+                </div>
+                <div className="info-box">
+                    <h4>Down</h4>
+                    <p>{roundInfo.bearAmount > 0 ? 
+                        (Number(roundInfo.totalAmount) / Number(roundInfo.bearAmount)).toFixed(2) : 
+                        '0'}x</p>
+                </div>
+            </div>
+            {currentPrice && (
+                <div className="current-price">
+                    <h4>Current Price</h4>
+                    <p className={currentPrice > Number(lockPrice) ? 'positive' : 'negative'}>
+                        ${currentPrice.toFixed(5)}
+                    </p>
+                </div>
             )}
         </div>
     );

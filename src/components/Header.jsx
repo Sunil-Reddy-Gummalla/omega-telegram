@@ -1,52 +1,49 @@
-import React, { useEffect } from 'react'
-import { ConnectButton } from 'thirdweb/react'
-import { inAppWallet, createWallet } from 'thirdweb/wallets'
-import { etherlink_testnet, etherlink_mainnet } from '../native-chains/etherlink'
-import { client } from '../client'
-import { useState } from 'react'
-import './Header.css'
+import React, { useState, useEffect } from 'react';
+import './Header.css';
 
 const Header = () => {
-  const [selectedChain, setSelectedChain] = useState(etherlink_testnet);
+    const [account, setAccount] = useState(null);
 
-  // Function to handle chain change
-  const handleChainChange = (e) => {
-    const chain = e.target.value === 'etherlink_testnet' ? etherlink_testnet : etherlink_mainnet;
-    setSelectedChain(chain);
-  };
+    useEffect(() => {
+        const checkConnection = async () => {
+            if (window.ethereum) {
+                const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                if (accounts.length > 0) {
+                    setAccount(accounts[0]);
+                }
+            }
+        };
 
-  return (
-    <header className="header">
-      <div className="header-left"> 
-        <h1>Omega Protocol</h1>
-      </div>
-      <div className="header-right">
-        {/* Styled Dropdown */}
-        <select 
-          className="chain-select" 
-          onChange={handleChainChange} 
-          value={selectedChain === etherlink_testnet ? 'etherlink_testnet' : 'etherlink_mainnet'}
-        >
-          <option value="etherlink_testnet">Etherlink Testnet</option>
-          <option value="etherlink_mainnet">Etherlink Mainnet</option>
-        </select>
+        checkConnection();
+    }, []);
 
-        {/* Wallet connection button */}
-        <ConnectButton
-          client={client}
-          chain={selectedChain}
-          wallets={[
-            inAppWallet({
-              auth: {
-                options: ['telegram'],
-              },
-            }),
-            createWallet('io.metamask'),
-          ]}
-        />
-      </div>
-    </header>
-  )
-}
+    const connectWallet = async () => {
+        if (window.ethereum) {
+            try {
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                setAccount(accounts[0]);
+            } catch (error) {
+                console.error("Failed to connect wallet:", error);
+            }
+        } else {
+            alert("Please install MetaMask!");
+        }
+    };
 
-export default Header
+    return (
+        <header className="header">
+            <div className="header-left">
+                <h1>Omega Protocol</h1>
+            </div>
+            <div className="header-right">
+                {account ? (
+                    <span>Connected: {account.slice(0, 6)}...{account.slice(-4)}</span>
+                ) : (
+                    <button onClick={connectWallet}>Connect Wallet</button>
+                )}
+            </div>
+        </header>
+    );
+};
+
+export default Header;
