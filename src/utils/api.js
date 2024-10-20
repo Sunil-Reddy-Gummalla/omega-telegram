@@ -5,7 +5,7 @@ const api = axios.create({
 });
 
 const CACHE_KEY = 'tezos_price_cache';
-const CACHE_DURATION = 60000; // 60 seconds
+const CACHE_DURATION = 20000;
 
 export const getTezosPrice = async () => {
   const now = Date.now();

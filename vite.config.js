@@ -6,7 +6,8 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     define: {
-      'process.env.VITE_PRIVATE_KEY': JSON.stringify(env.VITE_PRIVATE_KEY)
+      'process.env.VITE_PRIVATE_KEY': JSON.stringify(env.VITE_PRIVATE_KEY),
+      'process.env.THIRD_WEB_KEY': JSON.stringify(env.THIRD_WEB_KEY)
     }
   }
 })

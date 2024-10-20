@@ -1,26 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import './Card.css';
+import './PastRounds.css';
 import { ethers } from 'ethers';
 import { getContract, getSignedContract, connectWallet } from '../utils/contractUtils';
+import { useActiveAccount } from 'thirdweb/react';
 
-const ExpiredCard = () => {
+const PastRounds = () => {
     const [pastRounds, setPastRounds] = useState([]);
-    const [account, setAccount] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isClaimLoading, setIsClaimLoading] = useState(false);
-
-    useEffect(() => {
-        const checkAccount = async () => {
-            try {
-                const address = await connectWallet();
-                setAccount(address);
-            } catch (error) {
-                console.error("Failed to connect wallet:", error);
-            }
-        };
-
-        checkAccount();
-    }, []);
+    const account = useActiveAccount();
+    
 
     useEffect(() => {
         const fetchPastRounds = async () => {
@@ -40,7 +29,7 @@ const ExpiredCard = () => {
                     if (epoch < 0) break;
 
                     const round = await contract.rounds(epoch);
-                    const userRound = await contract.ledger(epoch, account);
+                    const userRound = await contract.ledger(epoch, account.address);
 
                     rounds.push({
                         epoch,
@@ -63,16 +52,12 @@ const ExpiredCard = () => {
         };
 
         fetchPastRounds();
-        const intervalId = setInterval(fetchPastRounds, 60000);
+        const intervalId = setInterval(fetchPastRounds, 5 * 60000);
 
         return () => clearInterval(intervalId);
     }, [account]);
 
     const handleClaim = async (epoch) => {
-        if (!account) {
-            alert("Please connect your wallet first");
-            return;
-        }
 
         setIsClaimLoading(true);
         try {
@@ -90,36 +75,55 @@ const ExpiredCard = () => {
         setIsClaimLoading(false);
     };
 
-    if (isLoading) return <div className="card expired-card">Loading past rounds...</div>;
+    if (isLoading) return <div>Loading past rounds...</div>;
 
-    if (!account) return <div className="card expired-card">Please connect your wallet to view past rounds.</div>;
+    if (!account) return <div>Please connect your wallet to view past rounds.</div>;
 
     return (
-        <div className="card expired-card">
+        <div className="past-rounds-container">
             <h3>Past Rounds</h3>
             {pastRounds.length > 0 ? (
-                pastRounds.map(round => (
-                    <div key={round.epoch} className="past-round">
-                        <h4>Round {round.epoch}</h4>
-                        <p>Close Price: {ethers.formatUnits(round.closePrice, 8)}</p>
-                        <p>Your Bet: {round.userAmount} XTZ {round.userBull ? 'UP' : 'DOWN'}</p>
-                        <p>Result: {round.cancelled ? 'Cancelled' : (round.bullWon ? 'UP' : 'DOWN')}</p>
-                        {!round.claimed && Number(round.userAmount) > 0 && (
-                            <button 
-                                onClick={() => handleClaim(round.epoch)}
-                                disabled={isClaimLoading || round.cancelled}
-                            >
-                                {isClaimLoading ? 'Claiming...' : 'Claim Reward'}
-                            </button>
-                        )}
-                        {round.claimed && <p>Rewards Claimed</p>}
-                    </div>
-                ))
+                <table className="past-rounds-table">
+                    <thead>
+                        <tr>
+                            <th>Round</th>
+                            <th>Close Price</th>
+                            <th>Your Bet</th>
+                            <th>Result</th>
+                            <th>Claim</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {pastRounds.map(round => (
+                            <tr key={round.epoch} className="past-round-row">
+                                <td>Round {round.epoch}</td>
+                                <td>{ethers.formatUnits(round.closePrice, 8)}</td>
+                                <td>{round.userAmount} XTZ {round.userBull ? 'UP' : 'DOWN'}</td>
+                                <td>{round.cancelled ? 'Cancelled' : (round.bullWon ? 'UP' : 'DOWN')}</td>
+                                <td>
+                                    {!round.claimed && Number(round.userAmount) > 0 ? (
+                                        <button 
+                                            onClick={() => handleClaim(round.epoch)}
+                                            disabled={isClaimLoading || round.cancelled}
+                                            className="claim-button"
+                                        >
+                                            {isClaimLoading ? 'Claiming...' : 'Claim Reward'}
+                                        </button>
+                                    ) : round.claimed ? (
+                                        <p>Rewards Claimed</p>
+                                    ) : null}
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
             ) : (
                 <p>No past rounds found.</p>
             )}
         </div>
     );
+    
+    
 };
 
-export default ExpiredCard;
+export default PastRounds;

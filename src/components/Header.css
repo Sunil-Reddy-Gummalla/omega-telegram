@@ -7,6 +7,7 @@
     background-color: #4b4e82;
     color: rgba(255, 255, 255, 0.87);
     flex-wrap: wrap; /* Allow wrapping on smaller screens */
+    margin: 0;
   }
   
   /* Title styling */
@@ -19,73 +20,10 @@
   
   /* Right section of the header */
   .header-right {
+    margin: 0;
     display: flex;
     align-items: center;
-    flex-wrap: wrap;
-    gap: 10px;
   }
   
-  /* Dropdown styling */
-  .chain-select {
-    padding: 8px;
-    border: 1px solid #555;
-    border-radius: 4px;
-    background-color: #3e406f;
-    color: rgba(255, 255, 255, 0.87);
-    font-size: 14px;
-    margin-right: 10px;
-    outline: none;
-    cursor: pointer;
-    appearance: none;
-  }
-  
-  /* On focus, show a green border */
-  .chain-select:focus {
-    border-color: #4caf50;
-  }
-  
-  /* Dropdown options styling */
-  .chain-select option {
-    background-color: #3e406f;
-    color: rgba(255, 255, 255, 0.87);
-  }
-  
-  /* Hide the default dropdown arrow in IE/Edge */
-  .chain-select::-ms-expand {
-    display: none;
-  }
-  
-  /* Mobile-specific styles */
-  @media (max-width: 768px) {
-    .header {
-      flex-direction: column; /* Stack items vertically on smaller screens */
-      align-items: flex-start; /* Align items to the left */
-      padding: 10px; /* Reduce padding on mobile */
-    }
-  
-    /* Adjust title font size for mobile */
-    .header-left h1 {
-      font-size: 20px;
-      margin-bottom: 10px; /* Add spacing between title and dropdown */
-    }
-  
-    /* Dropdown and button styling adjustments for mobile */
-    .header-right {
-      width: 100%; /* Make the dropdown and connect button take full width */
-      justify-content: space-between; /* Space between dropdown and connect button */
-    }
-  
-    /* Ensure dropdown and connect button are easy to tap on mobile */
-    .chain-select {
-      width: 48%; /* Make dropdown width 48% for better mobile view */
-      padding: 8px;
-      font-size: 16px;
-    }
-  
-    .connect-button {
-      width: 48%; /* Ensure the connect button takes up the remaining space */
-      padding: 10px;
-      font-size: 16px;
-    }
-  }
+
   
