@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getTezosPrice } from '../utils/api';
 
-const useTokenPrice = (intervalTime = 20000) => {
+const useTokenPrice = (intervalTime = 30000) => {
     const [price, setPrice] = useState(null);
 
     useEffect(() => {
