@@ -6,8 +6,6 @@ import { client } from '../client'
 import { etherlink_testnet } from '../native-chains/etherlink'
 
 const Header = () => {
-    console.log(process.env.THIRD_WEB_KEY);
-    console.log(process.env.VITE_PRIVATE_KEY);
     return (
         <header className="header">
             <div className="header-left">
